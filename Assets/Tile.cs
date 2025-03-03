@@ -6,7 +6,6 @@ using UnityEngine;
 public class Tile : MonoBehaviour
 {
     Renderer renderer;
-    private Vector2 index;
     Grid grid;
     private void Start()
     {
@@ -18,12 +17,12 @@ public class Tile : MonoBehaviour
     {
         if (Input.GetMouseButtonUp(0))
         {
-            Destroy(gameObject);
+            grid.RemoveTile(gameObject);
         }
-    }
-    public void SetIndex(int x  , int y)
-    {
-        index = new Vector2(x, y);
+        if (Input.GetMouseButtonUp(1))
+        {
+            Debug.Log(grid.FindTilePostion(gameObject));
+        }
     }
 
 }
