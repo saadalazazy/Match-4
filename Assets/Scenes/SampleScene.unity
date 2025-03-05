@@ -634,7 +634,7 @@ Transform:
   m_GameObject: {fileID: 2095379964}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 4, y: 5, z: 0}
+  m_LocalPosition: {x: 4, y: 4, z: 0}
   m_LocalScale: {x: 1.3094, y: 1.3094, z: 1.3094}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -656,9 +656,10 @@ MonoBehaviour:
   width: 8
   distance: 1.2
   tiles:
+  - {fileID: 5850872396669009586, guid: ddf8181e533c64b4ab30ed5b161f8daa, type: 3}
   - {fileID: 6360085444032553339, guid: c6087fd0f4dac4547a6e3fc8bcc3570f, type: 3}
   - {fileID: 3425199656446185179, guid: aa7b7420a248aee409be80394eead2da, type: 3}
-  - {fileID: 5850872396669009586, guid: ddf8181e533c64b4ab30ed5b161f8daa, type: 3}
+  timeDelay: 1.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

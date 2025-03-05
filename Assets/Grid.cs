@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class Grid : MonoBehaviour
 {
@@ -9,8 +10,7 @@ public class Grid : MonoBehaviour
     [SerializeField] float distance = 1;
     [SerializeField] List<GameObject> tiles;
     List<List<GameObject>> gridTiles;
-
-    [SerializeField] float removeDelay = 0.5f;
+    [SerializeField] float timeDelay= 0.5f;
 
     private void Start()
     {
@@ -28,6 +28,7 @@ public class Grid : MonoBehaviour
                 Vector3 postion = new Vector3(x * distance, y * distance, -0.5f);
                 int randomTile = Random.Range(0, tiles.Count);
                 GameObject tile = Instantiate(tiles[randomTile], postion, Quaternion.identity);
+                tile.GetComponent<Tile>().SetColor((Tile.Color)randomTile);
                 gridTiles[y].Add(tile);
             }
         }
@@ -35,22 +36,19 @@ public class Grid : MonoBehaviour
 
     public void RemoveTile(GameObject tile)
     {
-        StartCoroutine(RemoveTileWithDelay(tile));
-    }
-
-    private IEnumerator RemoveTileWithDelay(GameObject tile)
-    {
         Vector2 tilePosition = FindTilePostion(tile);
-        if (tilePosition.x == -1 && tilePosition.y == -1) yield break;
+        if (tilePosition.x == -1 && tilePosition.y == -1) return;
 
         Destroy(gridTiles[(int)tilePosition.y][(int)tilePosition.x]);
         gridTiles[(int)tilePosition.y][(int)tilePosition.x] = null;
-
         DropTilesAbove(tilePosition);
-        yield return new WaitForSeconds(removeDelay);
-        CheckAndRemoveHorizontalMatches(tilePosition);
+        StartCoroutine(RemoveTileWithDelay());
     }
-
+    private IEnumerator RemoveTileWithDelay()
+    {
+        yield return new WaitForSeconds(timeDelay);
+        CheckAndRemoveHorizontalMatchesInAllGrid();
+    }
     public Vector2 FindTilePostion(GameObject tile)
     {
         for (int y = 0; y < hight; ++y)
@@ -71,47 +69,76 @@ public class Grid : MonoBehaviour
             if (gridTiles[y][(int)position.x] != null)
             {
                 gridTiles[y - 1][(int)position.x] = gridTiles[y][(int)position.x];
+                gridTiles[y - 1][(int)position.x].GetComponent<Tile>().isMove = true;
                 gridTiles[y][(int)position.x] = null;
             }
         }
     }
-
-    public void CheckAndRemoveHorizontalMatches(Vector2 tilePostion)
+    public void CheckAndRemoveHorizontalMatchesInAllGrid()
     {
-        bool matchesRemoved = false;
-        int y = (int)tilePostion.y;
-        for (int x = 0; x < width - 2; x++)
+        StartCoroutine(CheckAndRemoveHorizontalMatchesWithDelay());
+    }
+
+    private IEnumerator CheckAndRemoveHorizontalMatchesWithDelay()
+    {
+        bool findMatches = false;
+        for (int y = 0; y < hight; y++)
         {
-            GameObject currentTile = gridTiles[y][x];
-            if (currentTile != null)
+            for (int x = 0; x < width - 2; x++)
             {
-                string currentTileType = currentTile.tag;
-                if (gridTiles[y][x + 1] != null && gridTiles[y][x + 1].tag == currentTileType &&
-                    gridTiles[y][x + 2] != null && gridTiles[y][x + 2].tag == currentTileType)
+                GameObject currentTile = gridTiles[y][x];
+                if (currentTile == null) continue;
+
+                Tile.Color currentTileType = currentTile.GetComponent<Tile>().GetColor();
+                List<GameObject> matchedTiles = new List<GameObject>();
+
+                int matchCount = GetMatchCount(x, y, currentTileType, matchedTiles);
+
+                if (matchCount >= 3 && IsAnyTileMoved(matchedTiles))
                 {
-                    StartCoroutine(RemoveMatchedTilesWithDelay(y, x));
-                    matchesRemoved = true;
+                    foreach (GameObject tile in matchedTiles)
+                    {
+                        RemoveTile(tile);
+                    }
+                    findMatches = true;
+                    yield return new WaitForSeconds(timeDelay);
+                    break;
                 }
             }
+            if(findMatches)
+                break;
         }
+    }
 
-        if (matchesRemoved)
+    private int GetMatchCount(int x, int y, Tile.Color color, List<GameObject> matchedTiles)
+    {
+        int count = 0;
+        for (int i = x; i < width; i++)
         {
-            StartCoroutine(CheckMatchesAgainAfterDelay(tilePostion));
+            GameObject tile = gridTiles[y][i];
+            if (tile != null && tile.GetComponent<Tile>().GetColor() == color)
+            {
+                matchedTiles.Add(tile);
+                count++;
+            }
+            else
+            {
+                break;
+            }
         }
+        return count;
     }
 
-    private IEnumerator RemoveMatchedTilesWithDelay(int y, int x)
+    private bool IsAnyTileMoved(List<GameObject> tiles)
     {
-        yield return new WaitForSeconds(removeDelay);
-        RemoveTile(gridTiles[y][x]);
-        RemoveTile(gridTiles[y][x + 1]);
-        RemoveTile(gridTiles[y][x + 2]);
+        foreach (GameObject tile in tiles)
+        {
+            if (tile.GetComponent<Tile>().isMove)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private IEnumerator CheckMatchesAgainAfterDelay(Vector2 tilePostion)
-    {
-        yield return new WaitForSeconds(removeDelay);
-        CheckAndRemoveHorizontalMatches(tilePostion);
-    }
 }
